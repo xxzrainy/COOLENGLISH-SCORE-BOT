@@ -8,6 +8,9 @@ let csvHeaders = [];
 let csvRows = [];
 let questionColumns = [];
 let results = [];
+let currentPage = 1;
+let currentFilter = 'all';
+let currentMinScore = 0;
 
 // ---- DOM ----
 const uploadArea = document.getElementById('uploadArea');
@@ -25,6 +28,11 @@ const resultBody = document.getElementById('resultBody');
 const statsGrid = document.getElementById('statsGrid');
 const filterTabs = document.getElementById('filterTabs');
 const exportBtn = document.getElementById('exportBtn');
+const pagination = document.getElementById('pagination');
+const pageInfo = document.getElementById('pageInfo');
+const prevPageBtn = document.getElementById('prevPage');
+const nextPageBtn = document.getElementById('nextPage');
+const pageSizeSelect = document.getElementById('pageSize');
 
 // ---- CSV Upload ----
 uploadArea.addEventListener('click', () => csvInput.click());
@@ -161,28 +169,44 @@ function renderResults(minScore) {
     <th>結果</th>
   </tr>`;
 
-  renderFilteredRows(minScore, 'all');
+  currentMinScore = minScore;
+  currentFilter = 'all';
+  currentPage = 1;
+  renderFilteredRows();
 
   filterTabs.querySelectorAll('.filter-tab').forEach(tab => {
     tab.onclick = () => {
       filterTabs.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
-      renderFilteredRows(minScore, tab.dataset.filter);
+      currentFilter = tab.dataset.filter;
+      currentPage = 1;
+      renderFilteredRows();
     };
   });
 }
 
-function renderFilteredRows(minScore, filter) {
-  const filtered = filter === 'all' ? results
-    : filter === 'pass' ? results.filter(r => r.passed)
+function getFilteredResults() {
+  return currentFilter === 'all' ? results
+    : currentFilter === 'pass' ? results.filter(r => r.passed)
     : results.filter(r => !r.passed);
+}
 
-  resultBody.innerHTML = filtered.map(r => `<tr>
+function renderFilteredRows() {
+  const filtered = getFilteredResults();
+  const pageSize = parseInt(pageSizeSelect.value);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+
+  if (currentPage > totalPages) currentPage = totalPages;
+
+  const start = (currentPage - 1) * pageSize;
+  const pageData = filtered.slice(start, start + pageSize);
+
+  resultBody.innerHTML = pageData.map(r => `<tr>
     <td style="font-weight:500;">${r.name}</td>
     <td style="font-size:13px;color:var(--md-sys-color-on-surface-variant);">${r.email}</td>
     ${questionColumns.map(q => {
       const score = r.scores[q.name];
-      const isLow = score < minScore;
+      const isLow = score < currentMinScore;
       return `<td class="${isLow ? 'score-low' : 'score-ok'}">${score}${isLow ? ' ✗' : ''}</td>`;
     }).join('')}
     <td style="font-weight:500;">${r.avg.toFixed(1)}</td>
@@ -191,7 +215,31 @@ function renderFilteredRows(minScore, filter) {
       : '<span class="chip-fail"><span class="material-symbols-outlined" style="font-size:14px;">cancel</span>未通過</span>'
     }</td>
   </tr>`).join('');
+
+  // Update pagination controls
+  if (filtered.length > parseInt(pageSizeSelect.value)) {
+    pagination.classList.remove('hidden');
+  } else {
+    pagination.classList.add('hidden');
+  }
+  pageInfo.textContent = `第 ${currentPage} / ${totalPages} 頁（共 ${filtered.length} 筆）`;
+  prevPageBtn.disabled = currentPage <= 1;
+  nextPageBtn.disabled = currentPage >= totalPages;
 }
+
+// ---- Pagination Events ----
+prevPageBtn.addEventListener('click', () => {
+  if (currentPage > 1) { currentPage--; renderFilteredRows(); }
+});
+nextPageBtn.addEventListener('click', () => {
+  const filtered = getFilteredResults();
+  const totalPages = Math.ceil(filtered.length / parseInt(pageSizeSelect.value));
+  if (currentPage < totalPages) { currentPage++; renderFilteredRows(); }
+});
+pageSizeSelect.addEventListener('change', () => {
+  currentPage = 1;
+  renderFilteredRows();
+});
 
 // ---- Export ----
 function downloadCSV(data, filename) {
