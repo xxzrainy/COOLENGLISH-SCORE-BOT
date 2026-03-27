@@ -15,7 +15,7 @@ let currentMinScore = 0;
 // ---- DOM ----
 const uploadArea = document.getElementById('uploadArea');
 const csvInput = document.getElementById('csvInput');
-const fileName = document.getElementById('fileName');
+const fileList = document.getElementById('fileList');
 const settingsCard = document.getElementById('settingsCard');
 const resultsCard = document.getElementById('resultsCard');
 const csvPreview = document.getElementById('csvPreview');
@@ -41,27 +41,45 @@ uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag
 uploadArea.addEventListener('drop', e => {
   e.preventDefault();
   uploadArea.classList.remove('dragover');
-  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
 });
-csvInput.addEventListener('change', e => { if (e.target.files.length) handleFile(e.target.files[0]); });
+csvInput.addEventListener('change', e => { if (e.target.files.length) handleFiles(e.target.files); });
 
-function handleFile(file) {
-  if (!file.name.endsWith('.csv')) return alert('請上傳 CSV 檔案');
-  fileName.textContent = file.name;
-  fileName.classList.remove('hidden');
+function handleFiles(files) {
+  const csvFiles = Array.from(files).filter(f => f.name.endsWith('.csv'));
+  if (csvFiles.length === 0) return alert('請上傳 CSV 檔案');
 
-  const reader = new FileReader();
-  reader.onload = e => parseCSV(e.target.result);
-  reader.readAsText(file, 'UTF-8');
+  fileList.innerHTML = csvFiles.map(f =>
+    `<span class="file-chip"><span class="material-symbols-outlined" style="font-size:14px;">description</span>${f.name}</span>`
+  ).join('');
+  fileList.classList.remove('hidden');
+
+  const readPromises = csvFiles.map(f => new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.readAsText(f, 'UTF-8');
+  }));
+
+  Promise.all(readPromises).then(texts => {
+    // Parse first file to get headers
+    const firstLines = texts[0].split(/\r?\n/).filter(l => l.trim());
+    if (firstLines.length < 2) return alert('CSV 至少需要標題列和一筆資料');
+
+    csvHeaders = parseCSVLine(firstLines[0]);
+    csvRows = firstLines.slice(1).map(l => parseCSVLine(l));
+
+    // Merge additional files (skip their header rows)
+    for (let i = 1; i < texts.length; i++) {
+      const lines = texts[i].split(/\r?\n/).filter(l => l.trim());
+      if (lines.length < 2) continue;
+      csvRows.push(...lines.slice(1).map(l => parseCSVLine(l)));
+    }
+
+    detectColumnsAndPreview(csvFiles.length);
+  });
 }
 
-function parseCSV(text) {
-  const lines = text.split(/\r?\n/).filter(l => l.trim());
-  if (lines.length < 2) return alert('CSV 至少需要標題列和一筆資料');
-
-  csvHeaders = parseCSVLine(lines[0]);
-  csvRows = lines.slice(1).map(l => parseCSVLine(l));
-
+function detectColumnsAndPreview(fileCount) {
   // Auto-detect: first 4 columns are fixed, rest are questions (skip ignored keywords)
   questionColumns = csvHeaders
     .map((h, i) => ({ name: h, index: i }))
@@ -72,8 +90,12 @@ function parseCSV(text) {
   csvPreview.classList.remove('hidden');
   csvPreview.innerHTML = `
     <div class="preview-row">
+      <span class="material-symbols-outlined" style="font-size:18px;color:var(--md-sys-color-primary);">folder</span>
+      已載入 <strong>${fileCount}</strong> 個檔案
+    </div>
+    <div class="preview-row">
       <span class="material-symbols-outlined" style="font-size:18px;color:var(--md-sys-color-primary);">people</span>
-      <strong>${csvRows.length}</strong> 筆學生資料
+      共 <strong>${csvRows.length}</strong> 筆學生資料
     </div>
     <div class="preview-row">
       <span class="material-symbols-outlined" style="font-size:18px;color:var(--md-sys-color-primary);">quiz</span>
@@ -281,7 +303,8 @@ resetBtn.addEventListener('click', () => {
   csvRows = [];
   questionColumns = [];
   results = [];
-  fileName.classList.add('hidden');
+  fileList.classList.add('hidden');
+  fileList.innerHTML = '';
   csvPreview.classList.add('hidden');
   settingsCard.classList.add('hidden');
   resultsCard.classList.add('hidden');
