@@ -99,7 +99,10 @@ function detectColumnsAndPreview(fileCount) {
     </div>
     <div class="preview-row">
       <span class="material-symbols-outlined" style="font-size:18px;color:var(--md-sys-color-primary);">quiz</span>
-      偵測到 <strong>${questionColumns.length}</strong> 個題目欄位：${questionColumns.map(c => `<span class="preview-chip">${c.name}</span>`).join(' ')}
+      偵測到 <strong>${questionColumns.length}</strong> 個題目欄位：
+    </div>
+    <div class="preview-chips-wrapper">
+      ${questionColumns.map(c => `<span class="preview-chip">${c.name}</span>`).join('')}
     </div>
   `;
 
