@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>成績計算系統</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="top-bar">
+  <span class="material-symbols-outlined">school</span>
+  <h1>成績計算系統</h1>
+</div>
+
+<div class="container">
+
+  <!-- Step 1: Upload CSV -->
+  <div class="card" id="uploadCard">
+    <div class="card-title">
+      <span class="material-symbols-outlined">upload_file</span>
+      步驟一：上傳成績 CSV
+    </div>
+    <div class="upload-area" id="uploadArea">
+      <span class="material-symbols-outlined">cloud_upload</span>
+      <p>點擊或拖曳 CSV 檔案至此處</p>
+      <p class="filename hidden" id="fileName"></p>
+    </div>
+    <input type="file" id="csvInput" accept=".csv">
+  </div>
+
+  <!-- Step 2: Settings -->
+  <div class="card hidden" id="settingsCard">
+    <div class="card-title">
+      <span class="material-symbols-outlined">tune</span>
+      步驟二：調整通過條件
+    </div>
+
+    <div id="csvPreview" class="csv-preview hidden"></div>
+
+    <div class="settings-grid">
+      <div class="md-field">
+        <label>通過平均分數</label>
+        <input type="number" id="passScore" value="60" min="0" max="100">
+        <div class="helper">所有題目的加權平均需達此分數才算通過</div>
+      </div>
+      <div class="md-field">
+        <label>每題最低門檻（預設）</label>
+        <input type="number" id="defaultMinScore" value="0" min="0" max="100">
+        <div class="helper">每題分數都需 >= 此門檻，否則直接不通過</div>
+      </div>
+    </div>
+
+    <div class="btn-group" style="margin-top: 24px;">
+      <button class="btn-filled" id="calcBtn">
+        <span class="material-symbols-outlined" style="font-size:18px;">calculate</span>
+        計算成績
+      </button>
+      <button class="btn-tonal" id="resetBtn">
+        <span class="material-symbols-outlined" style="font-size:18px;">restart_alt</span>
+        重新上傳
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 3: Results -->
+  <div class="card hidden" id="resultsCard">
+    <div class="card-title">
+      <span class="material-symbols-outlined">analytics</span>
+      步驟三：計算結果
+    </div>
+
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <div class="filter-tabs" id="filterTabs">
+      <button class="filter-tab active" data-filter="all">全部</button>
+      <button class="filter-tab" data-filter="pass">通過</button>
+      <button class="filter-tab" data-filter="fail">未通過</button>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead id="resultHead"></thead>
+        <tbody id="resultBody"></tbody>
+      </table>
+    </div>
+
+    <div class="btn-group" style="margin-top: 20px;">
+      <button class="btn-tonal" id="exportBtn">
+        <span class="material-symbols-outlined" style="font-size:18px;">download</span>
+        匯出全部結果
+      </button>
+      <button class="btn-filled" id="exportPassBtn">
+        <span class="material-symbols-outlined" style="font-size:18px;">check_circle</span>
+        匯出通過名單
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
