@@ -55,6 +55,53 @@ body {
   color: var(--md-sys-color-on-surface);
 }
 
+/* Mode Tabs */
+.mode-tabs {
+  display: flex;
+  gap: 0;
+  background: var(--md-sys-color-surface);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  padding: 0 24px;
+  position: sticky;
+  top: 61px;
+  z-index: 9;
+}
+.mode-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 24px;
+  border: none;
+  background: none;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  color: var(--md-sys-color-on-surface-variant);
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+}
+.mode-tab:hover {
+  color: var(--md-sys-color-on-surface);
+  background: var(--md-sys-color-surface-container-low);
+}
+.mode-tab.active {
+  color: var(--md-sys-color-primary);
+  border-bottom-color: var(--md-sys-color-primary);
+}
+.mode-tab .material-symbols-outlined {
+  color: inherit;
+}
+
+#scoreMode, #selfStudyMode {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+#scoreMode.hidden, #selfStudyMode.hidden {
+  display: none;
+}
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
