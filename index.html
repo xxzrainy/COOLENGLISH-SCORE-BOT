@@ -15,112 +15,233 @@
   <h1>成績計算系統</h1>
 </div>
 
+<div class="mode-tabs">
+  <button class="mode-tab active" data-mode="score">
+    <span class="material-symbols-outlined" style="font-size:20px;">calculate</span>
+    成績計算
+  </button>
+  <button class="mode-tab" data-mode="self-study">
+    <span class="material-symbols-outlined" style="font-size:20px;">timer</span>
+    自學活動時數
+  </button>
+</div>
+
 <div class="container">
 
-  <!-- Step 1: Upload CSV -->
-  <div class="card" id="uploadCard">
-    <div class="card-title">
-      <span class="material-symbols-outlined">upload_file</span>
-      步驟一：上傳成績 CSV
+  <!-- ========== 成績計算模式 ========== -->
+  <div id="scoreMode">
+    <!-- Step 1: Upload CSV -->
+    <div class="card" id="scoreUploadCard">
+      <div class="card-title">
+        <span class="material-symbols-outlined">upload_file</span>
+        步驟一：上傳成績 CSV
+      </div>
+      <div class="upload-area" id="scoreUploadArea">
+        <span class="material-symbols-outlined">cloud_upload</span>
+        <p>點擊或拖曳 CSV 檔案至此處（可多選）</p>
+        <div class="file-list hidden" id="scoreFileList"></div>
+      </div>
+      <input type="file" id="scoreCsvInput" accept=".csv" multiple>
     </div>
-    <div class="upload-area" id="uploadArea">
-      <span class="material-symbols-outlined">cloud_upload</span>
-      <p>點擊或拖曳 CSV 檔案至此處（可多選）</p>
-      <div class="file-list hidden" id="fileList"></div>
+
+    <!-- Step 2: Settings -->
+    <div class="card hidden" id="scoreSettingsCard">
+      <div class="card-title">
+        <span class="material-symbols-outlined">tune</span>
+        步驟二：調整通過條件
+      </div>
+
+      <div id="scoreCsvPreview" class="csv-preview hidden"></div>
+
+      <div class="settings-grid">
+        <div class="md-field">
+          <label>通過平均分數</label>
+          <input type="number" id="passScore" value="60" min="0" max="100">
+          <div class="helper">所有題目的加權平均需達此分數才算通過</div>
+        </div>
+        <div class="md-field">
+          <label>每題最低門檻（預設）</label>
+          <input type="number" id="defaultMinScore" value="0" min="0" max="100">
+          <div class="helper">每題分數都需 >= 此門檻，否則直接不通過</div>
+        </div>
+      </div>
+
+      <div class="btn-group" style="margin-top: 24px;">
+        <button class="btn-filled" id="scoreCalcBtn">
+          <span class="material-symbols-outlined" style="font-size:18px;">calculate</span>
+          計算成績
+        </button>
+        <button class="btn-tonal" id="scoreResetBtn">
+          <span class="material-symbols-outlined" style="font-size:18px;">restart_alt</span>
+          重新上傳
+        </button>
+      </div>
     </div>
-    <input type="file" id="csvInput" accept=".csv" multiple>
+
+    <!-- Step 3: Results -->
+    <div class="card hidden" id="scoreResultsCard">
+      <div class="card-title">
+        <span class="material-symbols-outlined">analytics</span>
+        步驟三：計算結果
+      </div>
+
+      <div class="stats-grid" id="scoreStatsGrid"></div>
+
+      <div class="filter-tabs" id="scoreFilterTabs">
+        <button class="filter-tab active" data-filter="all">全部</button>
+        <button class="filter-tab" data-filter="pass">通過</button>
+        <button class="filter-tab" data-filter="fail">未通過</button>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead id="scoreResultHead"></thead>
+          <tbody id="scoreResultBody"></tbody>
+        </table>
+      </div>
+
+      <div class="pagination hidden" id="scorePagination">
+        <button class="page-btn" id="scorePrevPage">
+          <span class="material-symbols-outlined" style="font-size:18px;">chevron_left</span>
+        </button>
+        <span class="page-info" id="scorePageInfo"></span>
+        <button class="page-btn" id="scoreNextPage">
+          <span class="material-symbols-outlined" style="font-size:18px;">chevron_right</span>
+        </button>
+        <div class="page-size-select">
+          <label>每頁</label>
+          <select id="scorePageSize">
+            <option value="100">100</option>
+            <option value="200">200</option>
+            <option value="500" selected>500</option>
+            <option value="1000">1000</option>
+          </select>
+          <label>筆</label>
+        </div>
+      </div>
+
+      <div class="btn-group" style="margin-top: 20px;">
+        <button class="btn-tonal" id="scoreExportBtn">
+          <span class="material-symbols-outlined" style="font-size:18px;">download</span>
+          匯出全部結果
+        </button>
+        <button class="btn-filled" id="scoreExportPassBtn">
+          <span class="material-symbols-outlined" style="font-size:18px;">check_circle</span>
+          匯出通過名單
+        </button>
+      </div>
+    </div>
   </div>
 
-  <!-- Step 2: Settings -->
-  <div class="card hidden" id="settingsCard">
-    <div class="card-title">
-      <span class="material-symbols-outlined">tune</span>
-      步驟二：調整通過條件
-    </div>
-
-    <div id="csvPreview" class="csv-preview hidden"></div>
-
-    <div class="settings-grid">
-      <div class="md-field">
-        <label>通過平均分數</label>
-        <input type="number" id="passScore" value="60" min="0" max="100">
-        <div class="helper">所有題目的加權平均需達此分數才算通過</div>
+  <!-- ========== 自學活動模式 ========== -->
+  <div id="selfStudyMode" class="hidden">
+    <!-- Step 1: Upload CSV -->
+    <div class="card" id="selfStudyUploadCard">
+      <div class="card-title">
+        <span class="material-symbols-outlined">upload_file</span>
+        步驟一：上傳自學活動 CSV
       </div>
-      <div class="md-field">
-        <label>每題最低門檻（預設）</label>
-        <input type="number" id="defaultMinScore" value="0" min="0" max="100">
-        <div class="helper">每題分數都需 >= 此門檻，否則直接不通過</div>
+      <div class="upload-area" id="selfStudyUploadArea">
+        <span class="material-symbols-outlined">cloud_upload</span>
+        <p>點擊或拖曳 CSV 檔案至此處（可多選）</p>
+        <div class="file-list hidden" id="selfStudyFileList"></div>
       </div>
+      <input type="file" id="selfStudyCsvInput" accept=".csv" multiple>
     </div>
 
-    <div class="btn-group" style="margin-top: 24px;">
-      <button class="btn-filled" id="calcBtn">
-        <span class="material-symbols-outlined" style="font-size:18px;">calculate</span>
-        計算成績
-      </button>
-      <button class="btn-tonal" id="resetBtn">
-        <span class="material-symbols-outlined" style="font-size:18px;">restart_alt</span>
-        重新上傳
-      </button>
-    </div>
-  </div>
+    <!-- Step 2: Settings -->
+    <div class="card hidden" id="selfStudySettingsCard">
+      <div class="card-title">
+        <span class="material-symbols-outlined">tune</span>
+        步驟二：調整通過條件
+      </div>
 
-  <!-- Step 3: Results -->
-  <div class="card hidden" id="resultsCard">
-    <div class="card-title">
-      <span class="material-symbols-outlined">analytics</span>
-      步驟三：計算結果
-    </div>
+      <div id="selfStudyCsvPreview" class="csv-preview hidden"></div>
 
-    <div class="stats-grid" id="statsGrid"></div>
+      <div class="settings-grid">
+        <div class="md-field">
+          <label>計算月份（YYYYMM）</label>
+          <input type="text" id="targetMonth" placeholder="例如 202603">
+          <div class="helper">輸入要計算的月份，留空則計算所有偵測到的月份</div>
+        </div>
+        <div class="md-field">
+          <label>最低學習時數（小時）</label>
+          <input type="number" id="minStudyHours" value="8" min="0" step="0.5">
+          <div class="helper">該月份學習總時數需達此門檻才算通過</div>
+        </div>
+      </div>
 
-    <div class="filter-tabs" id="filterTabs">
-      <button class="filter-tab active" data-filter="all">全部</button>
-      <button class="filter-tab" data-filter="pass">通過</button>
-      <button class="filter-tab" data-filter="fail">未通過</button>
-    </div>
-
-    <div class="table-wrapper">
-      <table>
-        <thead id="resultHead"></thead>
-        <tbody id="resultBody"></tbody>
-      </table>
-    </div>
-
-    <div class="pagination hidden" id="pagination">
-      <button class="page-btn" id="prevPage">
-        <span class="material-symbols-outlined" style="font-size:18px;">chevron_left</span>
-      </button>
-      <span class="page-info" id="pageInfo"></span>
-      <button class="page-btn" id="nextPage">
-        <span class="material-symbols-outlined" style="font-size:18px;">chevron_right</span>
-      </button>
-      <div class="page-size-select">
-        <label>每頁</label>
-        <select id="pageSize">
-          <option value="100">100</option>
-          <option value="200">200</option>
-          <option value="500" selected>500</option>
-          <option value="1000">1000</option>
-        </select>
-        <label>筆</label>
+      <div class="btn-group" style="margin-top: 24px;">
+        <button class="btn-filled" id="selfStudyCalcBtn">
+          <span class="material-symbols-outlined" style="font-size:18px;">calculate</span>
+          計算結果
+        </button>
+        <button class="btn-tonal" id="selfStudyResetBtn">
+          <span class="material-symbols-outlined" style="font-size:18px;">restart_alt</span>
+          重新上傳
+        </button>
       </div>
     </div>
 
-    <div class="btn-group" style="margin-top: 20px;">
-      <button class="btn-tonal" id="exportBtn">
-        <span class="material-symbols-outlined" style="font-size:18px;">download</span>
-        匯出全部結果
-      </button>
-      <button class="btn-filled" id="exportPassBtn">
-        <span class="material-symbols-outlined" style="font-size:18px;">check_circle</span>
-        匯出通過名單
-      </button>
+    <!-- Step 3: Results -->
+    <div class="card hidden" id="selfStudyResultsCard">
+      <div class="card-title">
+        <span class="material-symbols-outlined">analytics</span>
+        步驟三：計算結果
+      </div>
+
+      <div class="stats-grid" id="selfStudyStatsGrid"></div>
+
+      <div class="filter-tabs" id="selfStudyFilterTabs">
+        <button class="filter-tab active" data-filter="all">全部</button>
+        <button class="filter-tab" data-filter="pass">通過</button>
+        <button class="filter-tab" data-filter="fail">未通過</button>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead id="selfStudyResultHead"></thead>
+          <tbody id="selfStudyResultBody"></tbody>
+        </table>
+      </div>
+
+      <div class="pagination hidden" id="selfStudyPagination">
+        <button class="page-btn" id="selfStudyPrevPage">
+          <span class="material-symbols-outlined" style="font-size:18px;">chevron_left</span>
+        </button>
+        <span class="page-info" id="selfStudyPageInfo"></span>
+        <button class="page-btn" id="selfStudyNextPage">
+          <span class="material-symbols-outlined" style="font-size:18px;">chevron_right</span>
+        </button>
+        <div class="page-size-select">
+          <label>每頁</label>
+          <select id="selfStudyPageSize">
+            <option value="100">100</option>
+            <option value="200">200</option>
+            <option value="500" selected>500</option>
+            <option value="1000">1000</option>
+          </select>
+          <label>筆</label>
+        </div>
+      </div>
+
+      <div class="btn-group" style="margin-top: 20px;">
+        <button class="btn-tonal" id="selfStudyExportBtn">
+          <span class="material-symbols-outlined" style="font-size:18px;">download</span>
+          匯出全部結果
+        </button>
+        <button class="btn-filled" id="selfStudyExportPassBtn">
+          <span class="material-symbols-outlined" style="font-size:18px;">check_circle</span>
+          匯出通過名單
+        </button>
+      </div>
     </div>
   </div>
 
 </div>
 
 <script src="app.js"></script>
+<script src="score.js"></script>
+<script src="self-study.js"></script>
 </body>
 </html>
